@@ -14,6 +14,13 @@ html,body{height:100%;margin:0;overflow:hidden;background:#1d2a2c;color:var(--in
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 [hidden]{display:none!important}
 #c{position:fixed;inset:0;width:100%;height:100%;display:block}
+/* LANDSCAPE LOCK: phone held upright => game turned sideways (top of game = left edge of phone) */
+body.rot{position:fixed;top:0;left:0;margin:0;padding:0;box-sizing:border-box;overflow:hidden;transform-origin:0 0;transform:rotate(-90deg) translateX(-100%)}
+/* short landscape screens: menu in two columns so JWE is always visible without scrolling */
+.land .ov{padding:10px max(14px,var(--sr)) 10px max(14px,var(--sl))}
+.land .card{box-sizing:border-box;width:100%;max-width:880px;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);grid-auto-flow:row dense;column-gap:22px;row-gap:8px;padding:14px 20px}
+.land .card>*{grid-column:1}.land .card>ul,.land .card>.note{grid-column:2}.land .card>ul{grid-row:span 3;font-size:12.5px;line-height:1.45}
+.land h1{font-size:44px}.land .card p{font-size:13px;line-height:1.35}.land .card .note{font-size:11px}.land .go{padding:12px}.land .go2{padding:10px}
 button{font-family:var(--body);-webkit-tap-highlight-color:transparent;cursor:pointer}
 button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 .ov{position:fixed;inset:0;display:grid;place-items:center;z-index:20;overflow:auto;
@@ -142,8 +149,8 @@ b{color:var(--ink)}
 .touch #bAct.show{animation:pop .2s cubic-bezier(.3,1.6,.6,1)}
 @keyframes pop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
 /* portrait phones: mission banner drops below the money/minimap row */
-@media (max-aspect-ratio:4/5){.touch #mis{top:calc(122px + var(--st));max-width:76vw}.touch #radar{width:124px}.touch #mm{width:124px;height:84px}
-  .touch #where{top:calc(176px + var(--st))}.touch #toast{top:calc(30% + var(--st))}}
+@media (max-aspect-ratio:4/5){.touch:not(.rot) #mis{top:calc(122px + var(--st));max-width:76vw}.touch:not(.rot) #radar{width:124px}.touch:not(.rot) #mm{width:124px;height:84px}
+  .touch:not(.rot) #where{top:calc(176px + var(--st))}.touch:not(.rot) #toast{top:calc(30% + var(--st))}}
 /* ===================== LOADING SCREEN (cinematic) ===================== */
 #load{position:fixed;inset:0;z-index:30;overflow:hidden;transition:opacity .7s}
 #load.out{opacity:0;pointer-events:none}
@@ -163,7 +170,7 @@ b{color:var(--ink)}
 #load .llogo i{display:block;height:6px;margin-top:6px;margin-left:auto;width:72%;background:linear-gradient(90deg,#1d4fb8 0 50%,#d21f2f 50% 100%);box-shadow:2px 2px 0 #111}
 #load .lbot{position:absolute;left:0;right:0;bottom:calc(18px + var(--sb));display:grid;justify-items:center;gap:7px;padding:0 max(22px,var(--sl))}
 #lTxt{font:700 13px var(--body);letter-spacing:.14em;color:#e9e9e9;text-shadow:0 1px 3px #000}
-#load .lbar{width:min(86vw,820px);height:5px;border-radius:3px;background:rgba(0,0,0,.55);box-shadow:inset 0 0 0 1px rgba(255,255,255,.15);overflow:hidden}
+#load .lbar{width:min(86%,820px);height:5px;border-radius:3px;background:rgba(0,0,0,.55);box-shadow:inset 0 0 0 1px rgba(255,255,255,.15);overflow:hidden}
 #lFill{display:block;height:100%;width:0;background:linear-gradient(90deg,#fff,#ffb15a 70%,#ff7a1a);box-shadow:0 0 10px #ff8a2a;transition:width .25s}
 #lTip{font:600 12.5px var(--body);color:#cfcfcf;font-style:normal;text-shadow:0 1px 3px #000;text-align:center;max-width:90vw}
 </style>
@@ -213,7 +220,7 @@ b{color:var(--ink)}
       <li><b>Anliy:</b> moun ou envite nan jwèt la (bouton Share) parèt nan menm vil la avè w. Peze <b>PALE</b> pou ekri oswa pale ak yo.</li>
       <li>Swiv mak jòn nan pou pran koli a, epi mak vèt la pou livre l anvan tan an fini.</li>
     </ul>
-    <p class="note">Pi bon: vire telefòn ou an orizontal.</p>
+    <p class="note">Jwèt la toujou an orizontal: kenbe telefòn ou kouche.</p>
     <p class="note">Kredi: modèl 3D blende nwa a, <a href="https://sketchfab.com/3d-models/free-armored-police-vehicle-9aea4465dc974c728b6167eac5ffd22e" target="_blank" rel="noopener" style="color:inherit">[Free] Armored Police Vehicle</a> pa Roam_Man (Sketchfab), lisans CC BY 4.0.</p>
     <button class="go" id="play">Jwe</button>
     <button class="go2" id="garage">Gade machin lapolis yo an 3D</button>
@@ -250,8 +257,14 @@ renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;
 const scene=new T.Scene();scene.fog=new T.Fog(lin('#d3ddd8'),120,720);
 const cam=new T.PerspectiveCamera(65,1,.1,3000);
 let vw=1,vh=1;
-function resize(){vw=innerWidth;vh=innerHeight;renderer.setSize(vw,vh,false);cam.aspect=vw/vh;cam.fov=vw<vh?80:62;cam.updateProjectionMatrix();}
-addEventListener('resize',resize);resize();
+let ROT=false;
+function resize(){ROT=TOUCH&&innerHeight>innerWidth*1.05;const b=document.body;b.classList.toggle('rot',ROT);
+  b.style.width=ROT?innerHeight+'px':'';b.style.height=ROT?innerWidth+'px':'';
+  vw=ROT?innerHeight:innerWidth;vh=ROT?innerWidth:innerHeight;b.classList.toggle('land',vh<560&&vw>vh);renderer.setSize(vw,vh,false);cam.aspect=vw/vh;cam.fov=vw<vh?80:62;cam.updateProjectionMatrix();}
+addEventListener('resize',resize);addEventListener('orientationchange',()=>setTimeout(resize,250));resize();
+// screen point -> game point (inverse of rotate(-90deg) translateX(-100%))
+const gX=ev=>ROT?vw-ev.clientY:ev.clientX,gY=ev=>ROT?ev.clientX:ev.clientY;
+function gRectC(el){const r=el.getBoundingClientRect(),sx=r.left+r.width/2,sy=r.top+r.height/2;return ROT?[vw-sy,sx]:[sx,sy];}
 scene.add(new T.HemisphereLight(lin('#dcecff'),lin('#8a7a58'),.8));
 const sun=new T.DirectionalLight(lin('#fff0d4'),1.6);sun.castShadow=true;
 sun.shadow.mapSize.set(TOUCH?1024:2048,TOUCH?1024:2048);
@@ -1345,17 +1358,17 @@ addEventListener('keydown',ev=>{if(ev.target&&ev.target.tagName==='INPUT')return
 addEventListener('keyup',ev=>{const k=ev.key.toLowerCase();K[k]=false;if(k==='h')hornOn=false;});
 addEventListener('blur',()=>{for(const k in K)K[k]=false;moveT=lookT=null;hornOn=false;K.runBtn=false;knob.style.transform='';joy.style.cssText='';});
 cv.addEventListener('pointerdown',ev=>{if(!started)return;ensureAudio();
-  if(ev.pointerType==='mouse'){setTouch(false);if(document.pointerLockElement!==cv&&cv.requestPointerLock){try{const r=cv.requestPointerLock();if(r&&r.catch)r.catch(()=>{});}catch(e){}}mdrag={x:ev.clientX,y:ev.clientY};return;}
+  if(ev.pointerType==='mouse'){setTouch(false);if(document.pointerLockElement!==cv&&cv.requestPointerLock){try{const r=cv.requestPointerLock();if(r&&r.catch)r.catch(()=>{});}catch(e){}}mdrag={x:gX(ev),y:gY(ev)};return;}
   setTouch(true);
-  if(ev.clientX<vw*.48&&!moveT){const jr=joy.getBoundingClientRect(),cx=jr.left+jr.width/2,cy=jr.top+jr.height/2;let ox=cx,oy=cy;
-    if(hyp(ev.clientX-cx,ev.clientY-cy)>95){ox=ev.clientX;oy=ev.clientY;joy.style.cssText='left:'+(ox-66)+'px;top:'+(oy-66)+'px;bottom:auto';}   // floating
-    moveT={id:ev.pointerId,ox,oy,x:ev.clientX,y:ev.clientY};knob.style.transform='';}
-  else if(!lookT)lookT={id:ev.pointerId,x:ev.clientX,y:ev.clientY};
+  if(gX(ev)<vw*.48&&!moveT){const [cx,cy]=gRectC(joy);let ox=cx,oy=cy;
+    if(hyp(gX(ev)-cx,gY(ev)-cy)>95){ox=gX(ev);oy=gY(ev);joy.style.cssText='left:'+(ox-66)+'px;top:'+(oy-66)+'px;bottom:auto';}   // floating
+    moveT={id:ev.pointerId,ox,oy,x:gX(ev),y:gY(ev)};knob.style.transform='';}
+  else if(!lookT)lookT={id:ev.pointerId,x:gX(ev),y:gY(ev)};
   try{cv.setPointerCapture(ev.pointerId);}catch(e){}});
 cv.addEventListener('pointermove',ev=>{
-  if(ev.pointerType==='mouse'){if(document.pointerLockElement===cv)look(ev.movementX,ev.movementY,.0024);else if(mdrag&&(ev.buttons&1)){look(ev.clientX-mdrag.x,ev.clientY-mdrag.y,.005);mdrag={x:ev.clientX,y:ev.clientY};}return;}
-  if(moveT&&moveT.id===ev.pointerId){moveT.x=ev.clientX;moveT.y=ev.clientY;const dx=moveT.x-moveT.ox,dy=moveT.y-moveT.oy,d=hyp(dx,dy),m=Math.min(d,52)/(d||1);knob.style.transform='translate('+dx*m+'px,'+dy*m+'px)';}
-  if(lookT&&lookT.id===ev.pointerId){look(ev.clientX-lookT.x,ev.clientY-lookT.y,.0065);lookT.x=ev.clientX;lookT.y=ev.clientY;}});
+  if(ev.pointerType==='mouse'){if(document.pointerLockElement===cv)look(ev.movementX,ev.movementY,.0024);else if(mdrag&&(ev.buttons&1)){look(gX(ev)-mdrag.x,gY(ev)-mdrag.y,.005);mdrag={x:gX(ev),y:gY(ev)};}return;}
+  if(moveT&&moveT.id===ev.pointerId){moveT.x=gX(ev);moveT.y=gY(ev);const dx=moveT.x-moveT.ox,dy=moveT.y-moveT.oy,d=hyp(dx,dy),m=Math.min(d,52)/(d||1);knob.style.transform='translate('+dx*m+'px,'+dy*m+'px)';}
+  if(lookT&&lookT.id===ev.pointerId){look(gX(ev)-lookT.x,gY(ev)-lookT.y,.0065);lookT.x=gX(ev);lookT.y=gY(ev);}});
 const cvUp=ev=>{if(ev.pointerType==='mouse'){mdrag=null;return;}if(moveT&&moveT.id===ev.pointerId){moveT=null;knob.style.transform='';joy.style.cssText='';}if(lookT&&lookT.id===ev.pointerId)lookT=null;};
 cv.addEventListener('pointerup',cvUp);cv.addEventListener('pointercancel',cvUp);cv.addEventListener('contextmenu',ev=>ev.preventDefault());
 /* ---- input feedback: every press gets a visual squash, a click and a tiny haptic tick ---- */
@@ -1584,7 +1597,7 @@ function placeCam(dt){
     const tx=c.x,tz=c.z,ty=c.y+1.1;cam.position.set(tx+Math.sin(SHOW.a)*Math.cos(pt)*D,ty+Math.sin(pt)*D,tz+Math.cos(SHOW.a)*Math.cos(pt)*D);cam.lookAt(tx,ty,tz);return;}
   if(!started&&LOAD.on&&LOAD.shot){const L=LOAD.shot,k=Math.min(1,(performance.now()-LOAD.t0)/9000),e=1-Math.pow(1-k,2);
     cam.position.set(L.c[0]+(L.t[0]-L.c[0])*.12*e,L.c[1]+.25*e,L.c[2]+(L.t[2]-L.c[2])*.12*e);cam.lookAt(L.t[0],L.t[1],L.t[2]);cam.rotateZ(-.2+.05*e);
-    const fv=innerWidth<innerHeight?82:62;if(cam.fov!==fv){cam.fov=fv;cam.updateProjectionMatrix();}return;}
+    const fv=vw<vh?82:62;if(cam.fov!==fv){cam.fov=fv;cam.updateProjectionMatrix();}return;}
   if(!started){if(cam.fov!==65){cam.fov=65;cam.updateProjectionMatrix();}const t=performance.now()/1000;cam.position.set(Math.cos(t*.04)*150,55,Math.sin(t*.04)*150);cam.lookAt(0,4,0);return;}
   /* ---------- THIRD-PERSON FOLLOW CAMERA ----------
      1. pivot follows the target through a critically-damped spring (weight, no jitter)
@@ -1786,8 +1799,8 @@ function closeShow(){SHOW=null;$('show').hidden=true;$('menu').hidden=false;}
 $('garage').addEventListener('click',openShow);$('showBack').addEventListener('click',closeShow);
 $('showPrev').addEventListener('click',()=>{SHOW.i=(SHOW.i+SHOW.list.length-1)%SHOW.list.length;setShowName();});
 $('showNext').addEventListener('click',()=>{SHOW.i=(SHOW.i+1)%SHOW.list.length;setShowName();});
-cv.addEventListener('pointerdown',ev=>{if(!SHOW)return;SHOW.drag={x:ev.clientX,y:ev.clientY};try{cv.setPointerCapture(ev.pointerId);}catch(e){}});
-cv.addEventListener('pointermove',ev=>{if(!SHOW||!SHOW.drag)return;SHOW.a-=(ev.clientX-SHOW.drag.x)*.008;SHOW.pitch=clamp((SHOW.pitch||.28)+(ev.clientY-SHOW.drag.y)*.004,.02,1.1);SHOW.drag={x:ev.clientX,y:ev.clientY};SHOW.idle=0;});
+cv.addEventListener('pointerdown',ev=>{if(!SHOW)return;SHOW.drag={x:gX(ev),y:gY(ev)};try{cv.setPointerCapture(ev.pointerId);}catch(e){}});
+cv.addEventListener('pointermove',ev=>{if(!SHOW||!SHOW.drag)return;SHOW.a-=(gX(ev)-SHOW.drag.x)*.008;SHOW.pitch=clamp((SHOW.pitch||.28)+(gY(ev)-SHOW.drag.y)*.004,.02,1.1);SHOW.drag={x:gX(ev),y:gY(ev)};SHOW.idle=0;});
 const showUp=()=>{if(SHOW)SHOW.drag=null;};cv.addEventListener('pointerup',showUp);cv.addEventListener('pointercancel',showUp);
 
 /* ================= start ================= */
@@ -1865,7 +1878,10 @@ function loadTick(){if(!LOAD.on)return;if(!LOAD.t0)LOAD.t0=performance.now();   
   const ti=Math.floor(el/3500)%TIPS.length;if(ti!==LOAD.tip){LOAD.tip=ti;$('lTip').textContent=TIPS[ti];}
   if(done){LOAD.on=false;$('load').classList.add('out');if(!started)$('menu').hidden=false;setTimeout(()=>{$('load').hidden=true;if(LOAD.hero){scene.remove(LOAD.hero.g);LOAD.hero=null;}},750);}}
 initLoad();
-function start(){if(SHOW){SHOW=null;$('show').hidden=true;}ensureAudio();started=true;setTouch(TOUCH);$('menu').hidden=true;$('hud').hidden=false;newMission();toast('Byenvini nan Lari Cho!',2.5);}
+function lockLandscape(){if(!TOUCH)return;try{const d=document.documentElement,f=d.requestFullscreen||d.webkitRequestFullscreen;
+  const p=f&&!document.fullscreenElement?f.call(d):null,lk=()=>{try{const r=screen.orientation&&screen.orientation.lock&&screen.orientation.lock('landscape');if(r&&r.catch)r.catch(()=>{});}catch(e){}};
+  if(p&&p.then)p.then(lk,()=>{});else lk();}catch(e){}}
+function start(){lockLandscape();if(SHOW){SHOW=null;$('show').hidden=true;}ensureAudio();started=true;setTouch(TOUCH);$('menu').hidden=true;$('hud').hidden=false;newMission();toast('Byenvini nan Lari Cho!',2.5);}
 $('play').addEventListener('click',start);
 requestAnimationFrame(loop);
 })();
