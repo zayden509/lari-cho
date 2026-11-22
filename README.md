@@ -24,3 +24,7 @@ Mòd anliy lan (jwe ak lòt moun, chat, mikwo) mache sèlman lè jwèt la louvri
 ## Modèl 3D
 
 Gade [modeles/README.md](modeles/README.md) pou kote pou mete modèl 3D reyalis yo.
+
+## Kredi
+
+- Modèl 3D blende nwa a: [[Free] Armored Police Vehicle](https://sketchfab.com/3d-models/free-armored-police-vehicle-9aea4465dc974c728b6167eac5ffd22e) pa Roam_Man sou Sketchfab, lisans [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/). Nou redwi tekstil yo pou jwèt la ka mache sou telefòn.
