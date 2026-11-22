@@ -790,7 +790,7 @@ function wheelBld(r,w,rimHex,style){const b=new Bld(),N=24,hw=w/2,rr=r*.66,T1=li
       box(d,sx>0?w:-w-.12,.5,-1.15,sx>0?w+.12:-w,.58,1.2,blkk);}
     box(d,-1.05,.42,-2.6,1.05,.72,2.6,blkk,0,true);
     backD(dc,-2.85,-.72,.72,1.16,1.86,PNHB);sideD(dc,w,-1.0,.72,1.0,1.215,RU(2));K.decal=dc.build();bar(K,2.66,.7,.5);
-    Object.assign(K,{wr:.56,ww:.42,wx:1.0,wf:1.95,wb:-1.85,L:6.1,W:2.4,cr:1.3,offs:[-1.95,0,1.95],maxV:27,acc:6,mass:3,wbase:3.8,camD:10,cop:true,heavy:true,matte:true,paint:'#dccaa4',rim:'#1e1e1e',rimStyle:'steel'});});
+    Object.assign(K,{wr:.56,ww:.42,wx:1.0,wf:1.95,wb:-1.85,L:6.1,W:2.4,cr:1.3,offs:[-1.95,0,1.95],maxV:27,acc:6,mass:3,wbase:3.8,camD:10,cop:true,heavy:true,matte:true,paint:'#b9a274',rim:'#1e1e1e',rimStyle:'steel'});});
   mk('grey',(b,g,d,K)=>{const dc=new Bld(),w=1.12,wt=1.0,yb=2.0,yr=2.52,blkk=lin('#141414'),chr=lin('#b9bdc1');
     armBox(b,w,wt,yb,yr,-2.75,1.18,WH);
     prism(b,[[1.18,.72],[2.74,.72],[2.95,1.0],[2.9,1.5],[1.52,1.7],[1.18,1.7]],-1.04,1.04,WH);
@@ -827,8 +827,8 @@ function bakeModel(root){root.updateMatrixWorld(true);const inv=new T.Matrix4().
   const out=new T.Group();for(const [mat,e] of groups){const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(e.p,3));g.setAttribute('normal',new T.Float32BufferAttribute(e.n,3));g.setAttribute('uv',new T.Float32BufferAttribute(e.u,2));g.computeBoundingSphere();
     if(ENV){mat.envMap=ENV;mat.envMapIntensity=.9;}mat.needsUpdate=true;const m=new T.Mesh(g,mat);m.castShadow=true;out.add(m);}
   return out;}
-function loadGLB(type,url){if(!T.GLTFLoader)return;try{new T.GLTFLoader().load(url,gl=>{const model=bakeModel(gl.scene),box=new T.Box3().setFromObject(model),size=box.getSize(new T.Vector3()),k=KIT[type].L/size.z;
-    model.scale.setScalar(k);model.position.set(-(box.min.x+box.max.x)/2*k,-box.min.y*k,-(box.min.z+box.max.z)/2*k);GLB[type]=model;for(const c of cars)if(c.type===type)applyGLB(c);},undefined,()=>{});}catch(e){}}
+let GLBSTATE='ap chaje';function loadGLB(type,url){if(!T.GLTFLoader){GLBSTATE='erè';return;}try{new T.GLTFLoader().load(url,gl=>{GLBSTATE='pare';const model=bakeModel(gl.scene),box=new T.Box3().setFromObject(model),size=box.getSize(new T.Vector3()),k=KIT[type].L/size.z;
+    model.scale.setScalar(k);model.position.set(-(box.min.x+box.max.x)/2*k,-box.min.y*k,-(box.min.z+box.max.z)/2*k);GLB[type]=model;for(const c of cars)if(c.type===type)applyGLB(c);if(SHOW)setShowName();if(started)toast('Blende 3D a chaje!',2);},xhr=>{if(xhr&&xhr.total){GLBSTATE='ap chaje '+Math.round(xhr.loaded/xhr.total*100)+'%';if(SHOW)setShowName();}},()=>{GLBSTATE='erè';if(SHOW)setShowName();});}catch(e){GLBSTATE='erè';}}
 function applyGLB(c){const src=GLB[c.type];if(!src||c.glb)return;for(const ch of c.g.children)if(ch!==c.blob&&ch!==c.lr&&ch!==c.lb)ch.visible=false;c.glb=src.clone();c.g.add(c.glb);}
 const SEDAN_C=['#b8252c','#1f2f44','#e9ecef','#8a9096','#2763a8','#15806b','#c9561b','#5d3a7a','#d9b13a','#e9ecef'];
 const SUV_C=['#141516','#141516','#e8e8e8','#9aa1a8','#2a2d31','#5a1d1d'];
@@ -1249,7 +1249,7 @@ const CE=new T.Euler(0,0,0,'YXZ'),cq=new T.Quaternion(),offV=new T.Vector3();
 function camLen(px,py,pz,dx,dy,dz,len){for(let s=.6;s<=len;s+=.4){const x=px+dx*s,y=py+dy*s,z=pz+dz*s;
   for(const r of camRects)if(y<r.h+.25&&x>r.x0-.2&&x<r.x1+.2&&z>r.z0-.2&&z<r.z1+.2)return Math.max(.5,s-.5);}return len;}
 function placeCam(dt){
-  if(!started&&SHOW){const c=SHOW.list[SHOW.i];SHOW.idle+=dt;if(!SHOW.drag&&SHOW.idle>2)SHOW.a+=dt*.35;const pt=SHOW.pitch||.28,D=c.K.L*1.45+2;
+  if(!started&&SHOW){const c=SHOW.list[SHOW.i];SHOW.idle+=dt;if(!SHOW.drag&&SHOW.idle>2)SHOW.a+=dt*.35;const pt=SHOW.pitch||.22,D=c.K.L*1.05+2;
     const tx=c.x,tz=c.z,ty=c.y+1.1;cam.position.set(tx+Math.sin(SHOW.a)*Math.cos(pt)*D,ty+Math.sin(pt)*D,tz+Math.cos(SHOW.a)*Math.cos(pt)*D);cam.lookAt(tx,ty,tz);return;}
   if(!started){const t=performance.now()/1000;cam.position.set(Math.cos(t*.04)*150,55,Math.sin(t*.04)*150);cam.lookAt(0,4,0);return;}
   let px,py,pz,off;
@@ -1392,8 +1392,8 @@ let SHOW=null;
 const SHOW_NAMES={tan:'Blende PNH',mrap:'Blende Nwa',pickup:'Pickup Lapolis',grey:'Blende Gri'};
 function openShow(){const seen=new Set(),list=[];for(const c of cars)if(c.parked&&c.K.cop&&!seen.has(c.type)&&Math.abs(c.z-police_b.apronZ)<1){seen.add(c.type);list.push(c);}
   const ord=['mrap','tan','pickup','grey'];list.sort((a,b)=>ord.indexOf(a.type)-ord.indexOf(b.type));
-  SHOW={list,i:0,a:-2.4,drag:null,idle:0};$('menu').hidden=true;$('show').hidden=false;setShowName();}
-function setShowName(){$('showName').textContent=SHOW_NAMES[SHOW.list[SHOW.i].type]||'';}
+  SHOW={list,i:0,a:Math.PI+.5,drag:null,idle:0};$('menu').hidden=true;$('show').hidden=false;setShowName();}
+function setShowName(){const t=SHOW.list[SHOW.i].type;$('showName').textContent=SHOW_NAMES[t]||'';$('showHint').textContent=t==='mrap'?(GLBSTATE==='pare'?'Modèl 3D Sketchfab · glise dwèt ou pou vire l':GLBSTATE==='erè'?'Modèl 3D a pa t ka chaje: se ansyen blende a ou wè':'Modèl 3D a '+GLBSTATE+'…'):'Glise dwèt ou sou ekran an pou vire machin nan';}
 function closeShow(){SHOW=null;$('show').hidden=true;$('menu').hidden=false;}
 $('garage').addEventListener('click',openShow);$('showBack').addEventListener('click',closeShow);
 $('showPrev').addEventListener('click',()=>{SHOW.i=(SHOW.i+SHOW.list.length-1)%SHOW.list.length;setShowName();});
