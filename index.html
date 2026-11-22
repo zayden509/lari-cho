@@ -144,6 +144,28 @@ b{color:var(--ink)}
 /* portrait phones: mission banner drops below the money/minimap row */
 @media (max-aspect-ratio:4/5){.touch #mis{top:calc(122px + var(--st));max-width:76vw}.touch #radar{width:124px}.touch #mm{width:124px;height:84px}
   .touch #where{top:calc(176px + var(--st))}.touch #toast{top:calc(30% + var(--st))}}
+/* ===================== LOADING SCREEN (cinematic) ===================== */
+#load{position:fixed;inset:0;z-index:30;overflow:hidden;transition:opacity .7s}
+#load.out{opacity:0;pointer-events:none}
+#load .lines{position:absolute;inset:-20%;background:repeating-conic-gradient(from 0deg at 50% 46%,transparent 0deg 2.6deg,rgba(255,255,255,.16) 2.6deg 3.1deg,transparent 3.1deg 6.2deg);
+  -webkit-mask:radial-gradient(circle at 50% 46%,transparent 30%,#000 70%);mask:radial-gradient(circle at 50% 46%,transparent 30%,#000 70%);animation:lspin 1.4s steps(6) infinite}
+@keyframes lspin{to{transform:rotate(6deg)}}
+#load .lvig{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 45%,transparent 45%,rgba(8,6,4,.72) 100%),linear-gradient(180deg,rgba(0,0,0,.25),transparent 25%,transparent 70%,rgba(0,0,0,.7))}
+#load .arc{position:absolute;left:8%;top:26%;width:58vmin;height:58vmin;border-radius:50%;border:5px solid transparent;border-top-color:#8fe0ff;border-left-color:rgba(120,200,255,.5);
+  filter:drop-shadow(0 0 10px #3aa8ff) drop-shadow(0 0 24px #1d74c9);transform:rotate(-30deg);animation:larc 2.2s ease-in-out infinite alternate}
+#load .arc.b{left:auto;right:6%;top:40%;width:44vmin;height:44vmin;border-top-color:#ffb15a;border-left-color:rgba(255,140,40,.45);filter:drop-shadow(0 0 10px #ff8a2a) drop-shadow(0 0 22px #c9302c);animation-duration:1.7s}
+@keyframes larc{to{transform:rotate(25deg) scale(1.06)}}
+#load .emb{position:absolute;width:5px;height:5px;border-radius:50%;background:#ffb15a;box-shadow:0 0 8px #ff7a1a;animation:lemb linear infinite}
+@keyframes lemb{from{transform:translate(0,0);opacity:1}to{transform:translate(var(--dx),-60vh);opacity:0}}
+#load .llogo{position:absolute;top:calc(14px + var(--st));right:max(18px,var(--sr));text-align:right;transform:skewX(-10deg)}
+#load .llogo b{display:block;font:400 clamp(30px,7vw,58px)/.9 var(--display);color:#fff;letter-spacing:.02em;text-shadow:3px 3px 0 #111,0 0 18px rgba(0,0,0,.5)}
+#load .llogo b span{color:#ff8a2a}
+#load .llogo i{display:block;height:6px;margin-top:6px;margin-left:auto;width:72%;background:linear-gradient(90deg,#1d4fb8 0 50%,#d21f2f 50% 100%);box-shadow:2px 2px 0 #111}
+#load .lbot{position:absolute;left:0;right:0;bottom:calc(18px + var(--sb));display:grid;justify-items:center;gap:7px;padding:0 max(22px,var(--sl))}
+#lTxt{font:700 13px var(--body);letter-spacing:.14em;color:#e9e9e9;text-shadow:0 1px 3px #000}
+#load .lbar{width:min(86vw,820px);height:5px;border-radius:3px;background:rgba(0,0,0,.55);box-shadow:inset 0 0 0 1px rgba(255,255,255,.15);overflow:hidden}
+#lFill{display:block;height:100%;width:0;background:linear-gradient(90deg,#fff,#ffb15a 70%,#ff7a1a);box-shadow:0 0 10px #ff8a2a;transition:width .25s}
+#lTip{font:600 12.5px var(--body);color:#cfcfcf;font-style:normal;text-shadow:0 1px 3px #000;text-align:center;max-width:90vw}
 </style>
 
 <canvas id="c"></canvas>
@@ -179,6 +201,7 @@ b{color:var(--ink)}
 </div>
 
 <div id="fade"></div>
+<div id="load"><div class="lines"></div><div class="arc"></div><div class="arc b"></div><div id="lEmb"></div><div class="lvig"></div><div class="llogo"><b>LARI <span>CHO</span></b><i></i></div><div class="lbot"><span id="lTxt">AP CHAJE...</span><div class="lbar"><b id="lFill"></b></div><em id="lTip"></em></div></div>
 <div class="ov" id="menu">
   <div class="card">
     <div class="tag">Monn ouvè · Vil ayisyen</div>
@@ -1559,7 +1582,10 @@ function camLen(px,py,pz,dx,dy,dz,len){let best=len;const g=.2;
 function placeCam(dt){
   if(!started&&SHOW){const c=SHOW.list[SHOW.i];SHOW.idle+=dt;if(!SHOW.drag&&SHOW.idle>2)SHOW.a+=dt*.35;const pt=SHOW.pitch||.22,D=c.K.L*1.05+2;
     const tx=c.x,tz=c.z,ty=c.y+1.1;cam.position.set(tx+Math.sin(SHOW.a)*Math.cos(pt)*D,ty+Math.sin(pt)*D,tz+Math.cos(SHOW.a)*Math.cos(pt)*D);cam.lookAt(tx,ty,tz);return;}
-  if(!started){const t=performance.now()/1000;cam.position.set(Math.cos(t*.04)*150,55,Math.sin(t*.04)*150);cam.lookAt(0,4,0);return;}
+  if(!started&&LOAD.on&&LOAD.shot){const L=LOAD.shot,k=Math.min(1,(performance.now()-LOAD.t0)/9000),e=1-Math.pow(1-k,2);
+    cam.position.set(L.c[0]+(L.t[0]-L.c[0])*.12*e,L.c[1]+.25*e,L.c[2]+(L.t[2]-L.c[2])*.12*e);cam.lookAt(L.t[0],L.t[1],L.t[2]);cam.rotateZ(-.2+.05*e);
+    const fv=innerWidth<innerHeight?82:62;if(cam.fov!==fv){cam.fov=fv;cam.updateProjectionMatrix();}return;}
+  if(!started){if(cam.fov!==65){cam.fov=65;cam.updateProjectionMatrix();}const t=performance.now()/1000;cam.position.set(Math.cos(t*.04)*150,55,Math.sin(t*.04)*150);cam.lookAt(0,4,0);return;}
   /* ---------- THIRD-PERSON FOLLOW CAMERA ----------
      1. pivot follows the target through a critically-damped spring (weight, no jitter)
      2. boom offset blends between stances (walk / sprint / crouch / indoors / car)
@@ -1806,7 +1832,7 @@ function setup(){
 }
 setup();
 let last=0,fpsA=0,fpsN=0,qStep=0;
-function loop(ts){requestAnimationFrame(loop);let dt=Math.min(.05,(ts-last)/1000||0);last=ts;
+function loop(ts){requestAnimationFrame(loop);loadTick();let dt=Math.min(.05,(ts-last)/1000||0);last=ts;
   if(started){const h=dt/2;update(h);update(h);updatePeers(dt);hud(dt);
     fpsA+=dt;fpsN++;if(fpsA>4){const fps=fpsN/fpsA;fpsA=0;fpsN=0;
       if(fps<34&&qStep===0){qStep=1;PR=1;renderer.setPixelRatio(1);resize();}else if(fps<26&&qStep===1){qStep=2;sun.castShadow=false;}}}
@@ -1817,6 +1843,28 @@ function loop(ts){requestAnimationFrame(loop);let dt=Math.min(.05,(ts-last)/1000
   sun.target.position.set(ax,0,az);sun.position.set(ax+SUNDIR.x*150,SUNDIR.y*150,az+SUNDIR.z*150);sun.target.updateMatrixWorld();
   sky.position.copy(cam.position);
   renderer.render(scene,cam);}
+
+/* ================= LOADING SCREEN =================
+   Progress = 35% time (scene warm-up) + 65% 3D-model download. Finishes when the model is
+   ready (or failed) and at least 2.6 s have passed; never blocks longer than 14 s on slow data. */
+const LOAD={on:true,t0:0,minT:2600,p:0,shot:null,hero:null,tip:0};
+const TIPS=['Pouse jòystik la nèt pou w kouri.','Peze ANTRE devan yon pòt pou w louvri l.','Bese pou lapolis pa wè w de lwen.',
+  'Bwè yon kola nan frijidè a pou w reprann fòs.','Pa kanpe twò pre gang yo: y ap fouye pòch ou!','Yon kabann ba w tout sante w tounen.'];
+function initLoad(){const P=police_b,mx=P.cx-6.6,az=P.apronZ;
+  LOAD.shot={c:[mx+4.2,.55,az-7.8],t:[mx-.4,2.3,az]};
+  const h=mkCop(null,'full',null,{mask:false,facial:'goatee',hq:true});h.g.position.set(mx+2.3,.75,az-4.6);
+  h.g.rotation.y=Math.atan2(4.2-2.3,-7.8+4.6)+.9;h.anim(.85,.45,1,0,{lean:.32});LOAD.hero=h;
+  const em=$('lEmb');for(let i=0;i<18;i++){const e=document.createElement('i');e.className='emb';e.style.left=rnd(5,95)+'%';e.style.top=rnd(40,110)+'%';
+    e.style.setProperty('--dx',rnd(-80,80)+'px');e.style.animationDuration=rnd(2.2,4.5)+'s';e.style.animationDelay=-rnd(0,4)+'s';const z=rnd(2,6);e.style.width=e.style.height=z+'px';em.appendChild(e);}
+  $('lTip').textContent=TIPS[0];$('menu').hidden=true;}
+function loadTick(){if(!LOAD.on)return;if(!LOAD.t0)LOAD.t0=performance.now();   // clock starts at the first rendered frame (after shader warm-up)
+  const el=performance.now()-LOAD.t0,pT=Math.min(1,el/LOAD.minT);
+  const m=/(\d+)%/.exec(GLBSTATE),pG=GLBSTATE==='pare'||GLBSTATE==='erè'?1:m?+m[1]/100:0,done=(pG>=1&&pT>=1)||el>Math.max(14000,LOAD.minT);
+  LOAD.p=Math.max(LOAD.p,done?1:.35*pT+.65*pG);$('lFill').style.width=(LOAD.p*100).toFixed(1)+'%';
+  $('lTxt').textContent=done?'PARE!':'AP CHAJE... '+Math.round(LOAD.p*100)+'%';
+  const ti=Math.floor(el/3500)%TIPS.length;if(ti!==LOAD.tip){LOAD.tip=ti;$('lTip').textContent=TIPS[ti];}
+  if(done){LOAD.on=false;$('load').classList.add('out');if(!started)$('menu').hidden=false;setTimeout(()=>{$('load').hidden=true;if(LOAD.hero){scene.remove(LOAD.hero.g);LOAD.hero=null;}},750);}}
+initLoad();
 function start(){if(SHOW){SHOW=null;$('show').hidden=true;}ensureAudio();started=true;setTouch(TOUCH);$('menu').hidden=true;$('hud').hidden=false;newMission();toast('Byenvini nan Lari Cho!',2.5);}
 $('play').addEventListener('click',start);
 requestAnimationFrame(loop);
